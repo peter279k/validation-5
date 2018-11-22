@@ -5,7 +5,7 @@ namespace Rakit\Validation\Rules;
 use Rakit\Validation\Rule;
 use Rakit\Validation\MimeTypeGuesser;
 
-class UploadedFile extends Rule
+class UploadedFileSize extends Rule
 {
     use FileTrait;
 
@@ -18,9 +18,6 @@ class UploadedFile extends Rule
     /** @var string|int */
     protected $minSize = null;
 
-    /** @var array */
-    protected $allowedTypes = [];
-
     /**
      * Given $params and assign $this->params
      *
@@ -31,7 +28,6 @@ class UploadedFile extends Rule
     {
         $this->minSize(array_shift($params));
         $this->maxSize(array_shift($params));
-        $this->fileTypes($params);
 
         return $this;
     }
@@ -76,23 +72,6 @@ class UploadedFile extends Rule
     }
 
     /**
-     * Given $types and assign $this->params
-     *
-     * @param mixed $types
-     * @return self
-     */
-    public function fileTypes($types): Rule
-    {
-        if (is_string($types)) {
-            $types = explode('|', $types);
-        }
-
-        $this->params['allowed_types'] = $types;
-
-        return $this;
-    }
-
-    /**
      * Check the $value is valid
      *
      * @param mixed $value
@@ -102,7 +81,6 @@ class UploadedFile extends Rule
     {
         $minSize = $this->parameter('min_size');
         $maxSize = $this->parameter('max_size');
-        $allowedTypes = $this->parameter('allowed_types');
 
         // below is Required rule job
         if (!$this->isValueFromUploadedFiles($value) or $value['error'] == UPLOAD_ERR_NO_FILE) {
@@ -128,16 +106,6 @@ class UploadedFile extends Rule
         if ($maxSize) {
             $bytesMaxSize = $this->getBytes($maxSize);
             if ($value['size'] > $bytesMaxSize) {
-                return false;
-            }
-        }
-
-        if (!empty($allowedTypes)) {
-            $guesser = new MimeTypeGuesser;
-            $ext = $guesser->getExtension($value['type']);
-            unset($guesser);
-
-            if (!in_array($ext, $allowedTypes)) {
                 return false;
             }
         }
